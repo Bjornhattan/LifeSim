@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 import datetime, random, calendar, time, bisect, collections, json, os, shelve
 
-# I've added lots of comments to discuss possible changes... Find these at lines: 304, 335, 339, 340, 343, 344, 347, 348, 436, 654, 655, 656, 657, 658, 659, 702, 746, 814 and 822...
-
 phoneNoDB = []
 startDate = datetime.date(2010, 1, 1)
 today = datetime.date(2010, 1, 1)
@@ -147,7 +145,10 @@ class Character():
         self.inv = []
         self.attributes = {}
         for idx in range(8): #Sets the character's stats according to the lower and upper bounds of the statsType list
-            self.attributes[skills[idx]] = random.randint(statsType[idx][0], statsType[idx][1])
+            if type(statsType[idx]) == list:
+                self.attributes[skills[idx]] = random.randint(statsType[idx][0], statsType[idx][1])
+            else:
+                self.attributes[skills[idx]] = statsType[idx]
     def AddCash(self, cash):
         self.cash += cash
     def AddItem(self, item, quantity=1):
@@ -168,7 +169,7 @@ class Character():
                 print("%s%s%s%d%s%s%s%s"%(str(idx + 1) + " " * (4 - len(str(idx))) if selling else "",
                                           item.name, " " * (34 - len(item.name)),
                                           items[item], " " * (11 - len(str(items[item]))),
-                                          item.itemTypes[-1].title(), " " * (17 - len(item.itemTypes[-1])),
+                                          item.itemTypes[0].title(), " " * (17 - len(item.itemTypes[0])),
                                           str(item.price) if hasattr(item, "price") else "N/A") + "\n")
             return dict([(idx, [item, items[item]]) for idx, item in enumerate(items)])
         else:
@@ -297,6 +298,7 @@ class Achievement():
                 char.AddCash(reward)
             elif type(reward).__name__ == "Character":
                 char.AddItem(reward)
+
                 
 AchFishing1 = Achievement("Gone Fishing", "Go fishing in the Humber")
 AchFishing2 = Achievement("We Only Sing When We're Fishing", "Catch 25 fish")
@@ -342,10 +344,12 @@ BookFY001 = Item(["book","fictionbook","youngbook"],"King of the Torus",price=15
 BookFY002 = Item(["book","fictionbook","youngbook"],"Of Rats and Rascals",price=15)
 BookNY001 = Item(["book","nonfictionbook","youngbook"],"Linguistics: Broken Down",price=20) # Should increase Eloquence somehow?
 BookNY002 = Item(["book","nonfictionbook","youngbook"],"ProgrammingIsFun",price=20) # Should increase Computing somehow?
+BookNY003 = Item(["book","nonfictionbook","youngbook", "fishing"], "Fishing for Fun", price=15)
 BookFA001 = Item(["book","fictionbook","adultbook"],"The Goddess of Burton Manor",price=30)
 BookFA002 = Item(["book","fictionbook","adultbook"],"Sport of Chairs",price=30)
 BookNA001 = Item(["book","nonfictionbook","adultbook"],"If Escher Did It, You Can",price=40) # Should increase Artistic somehow? 
 BookNA002 = Item(["book","nonfictionbook","adultbook"],"Mozart Reconsidered",price=40) # Should increase Musical somehow?
+BookNA003 = Item(["book", "nonfictionbook", "adultbook", "fishing"], "Fish of the Humber", price=30)
 
 Books = [BookFC001,BookFC002,BookNC001,BookNC002,BookFY001,BookFY002,BookNY001,BookNA002,BookFA001,BookFA002,BookNA001,BookNA002] # Sold at Shop 5
 
@@ -384,7 +388,9 @@ def Chargen(charType, **kwargs):
     else:
         forename = random.choice(forenames)
         surname = random.choice(surnames)
-        if charType=="psteacher":
+        if charType == "shopowner":
+            stage = "work"
+        elif charType=="psteacher":
             lowerDate = datetime.date(1950, 1, 1)
             upperDate = datetime.date(1990, 12, 31)
             stage = "work"
@@ -399,23 +405,33 @@ def Chargen(charType, **kwargs):
             upperDate = datetime.date(2000, 8, 31)
             stage = "primary"
             statsType = kwargs["stats"]
-        elif charType=="friend" and GetPlayer().stage=="primary":
-            lowerDate = datetime.date(1998, 1, 1)
-            upperDate = datetime.date(2003, 12, 31)
-            stage = "work"
-            statsType = defaultStats
-        elif charType=="friend" and GetPlayer().stage=="":
-            lowerDate = datetime.date(1996, 1, 1)
-            upperDate = datetime.date(2000, 12, 31)
-            stage = "work"
-            statsType = defaultStats
+        elif charType=="friend":
+            if GetPlayer().stage=="primary":
+                lowerDate = datetime.date(1997, 1, 1)
+                upperDate = datetime.date(2002, 12, 31)
+                stage = "work"
+                statsType = defaultStats
+            elif GetPlayer().stage=="":
+                lowerDate = datetime.date(1996, 1, 1)
+                upperDate = datetime.date(2000, 12, 31)
+                stage = "work"
+                statsType = defaultStats
         elif charType=="fisherman":
             lowerDate = datetime.date(today.year - 70, 1, 1)
             upperDate = datetime.date(today.year - 30, 12, 31)
             stage = "work"
             statsType = fishermanType
-        dob = RandomDate(lowerDate, upperDate)
-        placeob = towns[WeightedChoice(townPops)]
+            
+        if "dob" in kwargs:
+            dob = kwargs["dob"]
+        else:
+            dob = RandomDate(lowerDate, upperDate)
+        if "pob" in kwargs:
+            placeob = kwargs["pob"]
+        else:
+            placeob = towns[WeightedChoice(townPops)]
+        if "stats" in kwargs:
+            statsType = kwargs["stats"]
 
     char = Character(statsType)
     char.charType = charType
@@ -433,7 +449,7 @@ def Chargen(charType, **kwargs):
 def PrimarySchool():
     print("Today is your first day at a new Primary School in " + GetPlayer().placeOfBirth)
     characters[GetPlayer(True)].__setattr__("stage", "primary")
-    randomClassMates = input("Would you like random classmates? [Y/N]").lower() # Saying Yes doesn't seem to work perfectly. Also, part of me wants the ability to have some random classmates and some chosen, but this is very hard to do...
+    randomClassMates = input("Would you like random classmates? [y/n]").lower() # Saying Yes doesn't seem to work perfectly. Also, part of me wants the ability to have some random classmates and some chosen, but this is very hard to do...
     if randomClassMates == "y":
         classMatesIndices = []
         for n in range(30):
@@ -449,8 +465,9 @@ def PrimarySchool():
         Chargen("customclassmate", forename=forename, surname=surname, placeOfBirth=placeOfBirth, stats=stats)
     for n in range(3):
         Chargen("psteacher")
-        classMateIndices = list(range(1,31))
+    classMatesIndices = list(range(1,31))
     classMatesIndices.sort(key = lambda idx: characters[idx].CalcPlayerRelation())
+    print(classMatesIndices)
     print("Your top three friends are:\n%s\n%s\n%s"%(characters[classMatesIndices[-1]].FullName(),
                                                      characters[classMatesIndices[-2]].FullName(),
                                                      characters[classMatesIndices[-3]].FullName()))
@@ -470,7 +487,7 @@ def PSEvent(charIndex):
         characters[charIndex].EditStat("computers", 1)
 
 def GiveHomework():
-    homeworkTypes = [("Maths Homework", "maths"), ("Science Homework", "science"), ("English Homework", "english")]
+    homeworkTypes = [("Maths Homework", "maths"), ("Science Homework", "science"), ("English Homework", "english"), ("Generic Homework", "generic")]
     if today.weekday() == 4:
         dateDue = today + datetime.timedelta(days=3)
         homeworkType = random.choice(homeworkTypes)
@@ -559,7 +576,7 @@ def Fish():
               "\nHe goes over to his collection and pulls out an amateur rod and gives it to you.")
         characters[GetPlayer(True)].AddItem(AmateurRod)
     print("He offers you the chance to buy a rod.")
-    buyRod  = input("Would you like to buy a new rod? [Y/N]").lower()
+    buyRod  = input("Would you like to buy a new rod? [y/n]").lower()
     if buyRod == "y":
         Trade(GetPlayer(), warden, ["rod"])
     rod = GetPlayer().GetBestItemOfType(["rod"])
@@ -585,24 +602,78 @@ def Fish():
     if totalFishBefore == totalFish:
         print("You caught nothing! You may wish to buy a better rod.")
     if GetPlayer().HasItemOfType(["fish"]) and input("%s offers to buy some fish from you."
-                                                    "\nWould you like to sell fish to %s? [Y/N]"%(wardenName, wardenName)).lower() == "y":
+                                                    "\nWould you like to sell fish to %s? [y/n]"%(wardenName, wardenName)).lower() == "y":
         Trade(warden, GetPlayer(), ["fish"])
 
-def ChooseShop():
+class Shop:
+    def __init__(self, ownerIndex, name="", desc="", itemTypes=[], buy=False, sell=True):
+        self.name = name
+        self.desc = desc
+        self.ownerIndex = ownerIndex
+        self.itemTypes = itemTypes
+        self.buy = buy
+        self.sell = sell
+
+shops = []
+        
+#Make your shops here
+Chargen("shopowner", stats=[14,17,7,12,11,5,14,3],
+        forename="Alex", surname="Rodman",
+        dob=datetime.date(1987, 2, 15), pob="Sutton Coldfield",
+        height = 188, potheight = 188,
+        inv = rods*15 + [BookNA003, BookNY003]*5,
+        cash = 5000)
+Rodmans = Shop(len(characters) -1, "Rodman's Fishing Equipment", ["rod", "fishing"], buy=True)
+shops.append(Rodmans)
+#Grimsby Town Tickets" # Works well
+#Grimsby Town Merchandise" # Added items
+#Bailey & Severn Travel" # Requires custom menu
+#History Bookstore" # Added items
+#Athletix Sportswear") # Not done yet
+
+def Shopping():
+    print("Welcome to the shopping precinct")
+    for i, shop in enumerate(shops):
+        print("[%d]"%(i+1), shop.name)
     while True:
-        shopNo = input("\nEnter the number of the shop you wish to visit. ")
+        shopNo = input("Which number shop would you like to visit? (0 to exit) ")
         try:
-            shopNo = int(shopNo)
-            if shopNo in range(8):
+            shopNo = int(shopNo) 
+            if shopNo > 0 and shopNo <= len(shops):
+                shopNo -= 1
                 break
-        except ValueError:
+            elif shopNo == 0:
+                return
+        except:
             pass
-    if shopNo == 1:
-        pass
-    elif shopNo == 2:
-        FbTicket()
-    else:
-        print ("That shop is closed today.")
+    shop = shops[shopNo]
+    print("Welcome to", shop.name)
+    while True:
+        if shop.buy:
+            if shop.sell:
+                while True:
+                    bs = input("Are you buying(1) or selling(2)? ")
+                    if bs in ["1", "2"]:
+                        break
+                if bs == "1":
+                    buy = True
+                else:
+                    buy = False
+            else:
+                buy = False
+        elif shop.sell:
+            buy = True
+        if buy:
+            Trade(GetPlayer(), characters[shop.ownerIndex])
+        else:
+            Trade(characters[shop.ownerIndex], GetPlayer())
+        while True:
+            leave = input("Would you like to leave" + " " + shop.name + "? [y/n]").lower()
+            if leave in ["y", "n"]:
+                break
+        if leave == "y":
+            break
+
 
 def Trade(buyer, seller, itemTypes=[]):
     buyerIdx = characters.index(buyer)
@@ -649,16 +720,6 @@ def Trade(buyer, seller, itemTypes=[]):
         except ValueError:
             pass
     
-def Shopping():
-    print ("Welcome to the shopping precinct."
-           "\n[1] Rodman's Fishing Equipment" # Doesn't work
-           "\n[2] Grimsby Town Tickets" # Works well
-           "\n[3] Grimsby Town Merchandise" # Added items
-           "\n[4] Bailey & Severn Travel" # Requires custom menu
-           "\n[5] History Bookstore" ] # Added items
-           "\n[6] Athletix Sportswear") # Not done yet
-    ChooseShop()
-    
 def FixtureGen(): #Returns the name of the opposing team in the upcoming football game and the date of the game as datetime.date object
     if (today - startDate).days % 14 + 7 - startDate.weekday() in range(5, 12):
         daysUntilMatch = 6 - (today.weekday() + 1) % 7
@@ -680,7 +741,7 @@ def FbTicket():
     print("Next Match: GTFC vs. " + fixture[0] +
           "\nDate: " + DisplayDate(fixture[1]) +
           "\nPrice: £15")
-    ticketShop = input ("Would you like to buy tickets? [Y/N]").lower()
+    ticketShop = input ("Would you like to buy tickets? [y/n]").lower()
     if ticketShop == "y":
         if GetPlayer().cash >= 15:
             ticket = Item("ticket", "GTFC vs. %s Tickets"%fixture[0], price=15, fixture=fixture)
@@ -778,7 +839,7 @@ print("\n                      |    |  |¯¯  |¯¯"
 
 Chargen("player")
 GetPlayer().PrintInfo()
-while input("Do you wish to keep this character? [Y/N]").lower() != "y":
+while input("Do you wish to keep this character? [y/n]").lower() != "y":
     del(characters[-1])
     Chargen("player")
     GetPlayer().PrintInfo()
@@ -818,8 +879,8 @@ while True: #Main game loop
             if today.weekday() == 6:
                 print("You have been given £5.")
                 characters[GetPlayer(True)].cash += 5
-			if today.year == 2014 and today.month == 7 and today.day == 14:
-				print("Happy July 14th 2014, everyone!") # Had to be done!
+                if today.year == 2014 and today.month == 7 and today.day == 14:
+                    print("Happy July 14th 2014, everyone!") # Had to be done!
             currentHeight = GetPlayer().height
             newHeight = GetPlayer().CalcHeight()
             heightDif = (newHeight - currentHeight) * 10
@@ -827,6 +888,6 @@ while True: #Main game loop
                 notifications.append("You've grown by %dmm!"%round(heightDif))
             daysPast += 1
             daysSinceFish += 1
-    restart = input("You are dead. Do you wish to run the simulation again? [Y/N]")
+    restart = input("You are dead. Do you wish to run the simulation again? [y/n]").lower()
     if restart.lower() == "n":
         break
