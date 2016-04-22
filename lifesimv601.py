@@ -221,7 +221,7 @@ class Character():
                                 self.eloquence,
                                 "Player relationship: %d"%self.CalcPlayerRelation() if self.charType != "player" else ""))
     def __getattr__(self, name):
-        if name in self.attributes:
+        if name in self.__getattribute__("attributes"):
             return self.attributes[name]
         else:
             raise AttributeError
@@ -251,7 +251,7 @@ class Character():
         return "%s %s"%(self.forename, self.surname)
     def CalcPlayerRelation(self, minrel=0, maxrel=180):
         gap = 0
-        playerIndex = GetPlayer(True)
+        playerIndex = GetPlayerIndex()
         for attr in self.attributes:
             gap += abs(getattr(self, attr) - getattr(GetPlayer(), attr))
         self.playerRelation = max(maxrel-gap,minrel)
@@ -353,13 +353,15 @@ BookNA003 = Item(["book", "nonfictionbook", "adultbook", "fishing"], "Fish of th
 
 Books = [BookFC001,BookFC002,BookNC001,BookNC002,BookFY001,BookFY002,BookNY001,BookNA002,BookFA001,BookFA002,BookNA001,BookNA002] # Sold at Shop 5
 
-def GetPlayer(getIdx = False):  #getIdx=True will return the player's index in the characters list
+def GetPlayer():  #getIdx=True will return the player's index in the characters list
     for char in characters:
         if char.IsPlayer():
-            if getIdx:
-                return characters.index(char)
-            else:
-                return char
+            return char
+
+def GetPlayerIndex():
+    for i, char in enumerate(characters):
+        if char.IsPlayer():
+            return i
 
 def GetType(typeFilter, getIdx = False, chars = characters):
     if getIdx:
@@ -384,7 +386,6 @@ def Chargen(charType, **kwargs):
         dob = datetime.date(2000, 1, 1)
         stage = ""
         statsType = ChooseStats()
-        print(statsType)
     else:
         forename = random.choice(forenames)
         surname = random.choice(surnames)
@@ -448,7 +449,7 @@ def Chargen(charType, **kwargs):
   
 def PrimarySchool():
     print("Today is your first day at a new Primary School in " + GetPlayer().placeOfBirth)
-    characters[GetPlayer(True)].__setattr__("stage", "primary")
+    characters[GetPlayerIndex()].__setattr__("stage", "primary")
     randomClassMates = input("Would you like random classmates? [y/n]").lower() # Saying Yes doesn't seem to work perfectly. Also, part of me wants the ability to have some random classmates and some chosen, but this is very hard to do...
     if randomClassMates == "y":
         classMatesIndices = []
@@ -492,7 +493,7 @@ def GiveHomework():
         dateDue = today + datetime.timedelta(days=3)
         homeworkType = random.choice(homeworkTypes)
         Homework = Item([homeworkType[1], "homework"], homeworkType[0], due=dateDue)
-        characters[GetPlayer(True)].AddItem(Homework)
+        characters[GetPlayerIndex()].AddItem(Homework)
         print("You have been given %s to complete by %s"%(homeworkType[0], DisplayDate(dateDue)))
 
 def CheckHomework():
@@ -501,7 +502,7 @@ def CheckHomework():
         if homeworks:
             homework = homeworks[0]
             print("You hand in your %s"%homework.name)
-            characters[GetPlayer(True)].RemoveItem(homework)
+            characters[GetPlayerIndex()].RemoveItem(homework)
 
 def DoHomeWork():
     homeworks = GetAttr("due", None, False, GetPlayer().GetItemsOfType("homework"))
@@ -547,7 +548,7 @@ def Visit(place):
         print("You have met " + characters[-1].FullName())
     elif place == "fish":
         if daysSinceFish>2:
-            characters[GetPlayer(True)].AddAchievement(AchFishing1)
+            characters[GetPlayerIndex()].AddAchievement(AchFishing1)
             Fish()
             daysSinceFish = 0
         else:
@@ -562,48 +563,49 @@ def Visit(place):
 def Fish():
     global totalFish
     totalFishBefore = totalFish
-    fishermen = GetAttr("rota", today.weekday(), False, GetType("fisherman"))
-    if len(fishermen) == 0:
+    fishermenIdx = GetAttr("rota", today.weekday(), True, GetType("fisherman"))
+    if len(fishermenIdx) == 0:
         Chargen("fisherman", rota=today.weekday(), inv=rods*10, cash=500)
-        warden = characters[-1]
+        wardenIdx = len(characters)-1
     else:
-        warden = fishermen[0]
+        wardenIdx = fishermenIdx[0]
+    warden = characters[wardenIdx]
     wardenName = warden.FullName()
     print("The fishermen invite you to go fishing."
           "\nThe day's warden, %s, welcomes you onto the boat."%wardenName)
     if not GetPlayer().HasItemOfType("rod"):
         print(wardenName + " sees that you don't have a rod."
               "\nHe goes over to his collection and pulls out an amateur rod and gives it to you.")
-        characters[GetPlayer(True)].AddItem(AmateurRod)
+        characters[GetPlayerIndex()].AddItem(AmateurRod)
     print("He offers you the chance to buy a rod.")
     buyRod  = input("Would you like to buy a new rod? [y/n]").lower()
     if buyRod == "y":
-        Trade(GetPlayer(), warden, ["rod"])
+        Trade(wardenIdx, ["rod"])
     rod = GetPlayer().GetBestItemOfType(["rod"])
     if rod == NanotubeRod:
-        characters[GetPlayer(True)].AddAchievement(AchFishing3)
+        characters[GetPlayerIndex()].AddAchievement(AchFishing3)
     print("You take out your %s..."%rod.name)
     for attempt in range(rod.rating):
         time.sleep(1)
         if random.randint(1, 25) < rod.rating*1.5 + round(GetPlayer().strength/5):
             print(random.choice(["You caught a fish!", "That one met its end!", "You got one!", "Nice catch!", "Pro catch!", "You caught one!"]))
-            characters[GetPlayer(True)].AddItem(fish[WeightedChoice(rod.fishChances)])
+            characters[GetPlayerIndex()].AddItem(fish[WeightedChoice(rod.fishChances)])
             totalFish += 1
         else:
             if random.randint(1,3) == 3:
                 waste = random.choice(fishingWaste)
-                characters[GetPlayer(True)].AddItem(waste)
+                characters[GetPlayerIndex()].AddItem(waste)
                 print("You caught %s"%Indef(waste.name))
             else:
                 print(random.choice(["Nice miss", "You didn't get that one.", "That one got away!", "That fish didn't bite.", "You missed!", "You missed that one."]))
         time.sleep(1)
     if totalFish > 24:
-        characters[GetPlayer(True)].AddAchievement(AchFishing2)
+        characters[GetPlayerIndex()].AddAchievement(AchFishing2)
     if totalFishBefore == totalFish:
         print("You caught nothing! You may wish to buy a better rod.")
     if GetPlayer().HasItemOfType(["fish"]) and input("%s offers to buy some fish from you."
                                                     "\nWould you like to sell fish to %s? [y/n]"%(wardenName, wardenName)).lower() == "y":
-        Trade(warden, GetPlayer(), ["fish"])
+        Trade(wardenIdx, ["fish"], False)
 
 class Shop:
     def __init__(self, ownerIndex, name="", desc="", itemTypes=[], buy=False, sell=True):
@@ -664,27 +666,38 @@ def Shopping():
         elif shop.sell:
             buy = True
         if buy:
-            Trade(GetPlayer(), characters[shop.ownerIndex])
+            Trade(shop.ownerIndex, shop.itemTypes)
         else:
-            Trade(characters[shop.ownerIndex], GetPlayer())
+            Trade(shop.ownerIndex, shop.itemTypes, False)
         while True:
-            leave = input("Would you like to leave" + " " + shop.name + "? [y/n]").lower()
-            if leave in ["y", "n"]:
+            stay = input("Stay in " + shop.name + "? [y/n]").lower()
+            if stay in ["y", "n"]:
                 break
-        if leave == "y":
+        if stay == "n":
             break
 
 
-def Trade(buyer, seller, itemTypes=[]):
-    buyerIdx = characters.index(buyer)
-    sellerIdx = characters.index(seller)
+def Trade(vendorIdx, itemTypes=[], buy=True):
+    vendor = characters[vendorIdx]
+    if buy:
+        sellerIdx = vendorIdx
+        buyerIdx = GetPlayerIndex()
+    else:
+        sellerIdx = GetPlayerIndex()
+        buyerIdx = vendorIdx
+    seller = characters[sellerIdx]
+    buyer = characters[buyerIdx]
     while True:
         items = seller.DisplayInv(True, itemTypes)
+        print("%s's cash: £%d"%(vendor.forename, vendor.cash))
+        print("Your cash: £%d"%GetPlayer().cash)
         if items == None:
-            print("You sold out!")
+            print("%s no items to sell!"%("You have" if not buy else seller.forename + " has"))
             break
-        print("%s cash: £%d"%("Your" if buyer == GetPlayer() else "%s's"%buyer.forename, buyer.cash))
-        itemNo = input("Number of item to %s (0 to exit): "%("sell" if seller == GetPlayer() else "buy"))
+        if buyer.cash == 0:
+            print("%s ran out of cash!"%("You" if buy else buyer.forename))
+            break
+        itemNo = input("Number of item to %s (0 to exit): "%("sell" if not buy else "buy"))
         try:
             itemNo = int(itemNo) - 1
             if itemNo >= 0 and itemNo < len(items):
@@ -693,7 +706,7 @@ def Trade(buyer, seller, itemTypes=[]):
                 itemCount = items[itemNo][1]
                 if itemCount > 1:
                     while True:
-                        itemQuantity = input("How many would you like to %s? (0 for none)"%("sell" if seller == GetPlayer() else "buy"))
+                        itemQuantity = input("How many would you like to %s? (0 for none)"%("sell" if not buy else "buy"))
                         try:
                             itemQuantity = int(itemQuantity)
                             if itemQuantity >= 0 and itemQuantity <= itemCount:
@@ -713,7 +726,7 @@ def Trade(buyer, seller, itemTypes=[]):
                 elif itemQuantity == 0:
                     break
                 else:
-                    print("%s not have enough cash!"%("You do" if buyer == GetPlayer() else buyer.forename + " does"))
+                    print("%s not have enough cash!"%("You do" if buy else buyer.forename + " does"))
                     
             elif itemNo == -1:
                 break
@@ -745,8 +758,8 @@ def FbTicket():
     if ticketShop == "y":
         if GetPlayer().cash >= 15:
             ticket = Item("ticket", "GTFC vs. %s Tickets"%fixture[0], price=15, fixture=fixture)
-            characters[GetPlayer(True)].AddCash(-15)
-            characters[GetPlayer(True)].AddItem(ticket)
+            characters[GetPlayerIndex()].AddCash(-15)
+            characters[GetPlayerIndex()].AddItem(ticket)
         else:
             print("You don't have enough cash.")
 
@@ -757,7 +770,7 @@ def FbStadium():
             playerTickets = GetPlayer().GetItemsOfType("ticket")
             for ticket in playerTickets:
                 if ticket.fixture == fixture:
-                    characters[GetPlayer(True)].RemoveItem(ticket)
+                    characters[GetPlayerIndex()].RemoveItem(ticket)
                     FbGame()
         else:
             print("You do not have a ticket for today's game.") # Buy on the gate for £17 perhaps? Simulates reality where buy on the day tickets cost more...
@@ -804,9 +817,11 @@ def List(*args):
         char.PrintInfo()
         
 def SaveGame(*args):
-    d = shelve.open("save") # The F*** is Shelve?
+    d = shelve.open("save")
     d['chars'] = characters
     d.close()
+    d = shelve.open("save")
+    print(d['chars'][0].FullName())
     
 def Inv(*args):
     GetPlayer().DisplayInv()
@@ -843,7 +858,7 @@ while input("Do you wish to keep this character? [y/n]").lower() != "y":
     del(characters[-1])
     Chargen("player")
     GetPlayer().PrintInfo()
-characters[GetPlayer(True)].AddCash(10000)
+characters[GetPlayerIndex()].AddCash(10000)
 fbFixtures.append(FixtureGen())
 
 while True: #Main game loop
@@ -878,7 +893,7 @@ while True: #Main game loop
                         PSEvent(charIndex)
             if today.weekday() == 6:
                 print("You have been given £5.")
-                characters[GetPlayer(True)].cash += 5
+                characters[GetPlayerIndex()].cash += 5
                 if today.year == 2014 and today.month == 7 and today.day == 14:
                     print("Happy July 14th 2014, everyone!") # Had to be done!
             currentHeight = GetPlayer().height
