@@ -450,13 +450,13 @@ def Chargen(charType, **kwargs):
 def PrimarySchool():
     print("Today is your first day at a new Primary School in " + GetPlayer().placeOfBirth)
     characters[GetPlayerIndex()].__setattr__("stage", "primary")
+    startingIdx = len(characters)
+    classMatesIndices = list(range(startingIdx, startingIdx + 30))
     randomClassMates = input("Would you like random classmates? [y/n]").lower() # Saying Yes doesn't seem to work perfectly. Also, part of me wants the ability to have some random classmates and some chosen, but this is very hard to do...
     if randomClassMates == "y":
-        classMatesIndices = []
         for n in range(30):
             Chargen("classmate")
     else:
-      classMatesIndices = []
       for n in range(30):
         print("%s Classmate:\n"%Ord(n+1))
         forename = input("Forename: ")
@@ -466,9 +466,7 @@ def PrimarySchool():
         Chargen("customclassmate", forename=forename, surname=surname, placeOfBirth=placeOfBirth, stats=stats)
     for n in range(3):
         Chargen("psteacher")
-    classMatesIndices = list(range(1,31))
     classMatesIndices.sort(key = lambda idx: characters[idx].CalcPlayerRelation())
-    print(classMatesIndices)
     print("Your top three friends are:\n%s\n%s\n%s"%(characters[classMatesIndices[-1]].FullName(),
                                                      characters[classMatesIndices[-2]].FullName(),
                                                      characters[classMatesIndices[-3]].FullName()))
