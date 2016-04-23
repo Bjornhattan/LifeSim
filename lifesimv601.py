@@ -353,6 +353,27 @@ BookNA003 = Item(["book", "nonfictionbook", "adultbook", "fishing"], "Fish of th
 
 Books = [BookFC001,BookFC002,BookNC001,BookNC002,BookFY001,BookFY002,BookNY001,BookNA002,BookFA001,BookFA002,BookNA001,BookNA002] # Sold at Shop 5
 
+TracksuitTop = Item(["clothing","shirt","genericsportskit"],"Tracksuit Top",price=20)
+TracksuitBottoms = Item(["clothing","trousers","genericsportskit"],"Tracksuit Bottoms",price=7)
+WakeTop = Item(["clothing","shirt","wake"],"Wake Training Top",price=70)
+WakeBottoms = Item(["clothing","trousers","wake"],"Wake Training Bottoms",price=40)
+WakeTrainers = Item(["clothing","shoes","trainers","wake"],"Wake Trainers",price=20)
+WakeNitro = Item(["clothing","shoes","trainers","wake"],"Wake Nitro Trainers",price=100)
+WakeNitroPlus = Item(["clothing","shoes","trainers","wake"],"Wake Nitro Plus Trainers",price=170)
+WakePolyTrainer = Item(["clothing","shoes","trainers","wake"],"Wake PolyTrainer",price=450)
+WakeBloodTex = Item(["clothing","shoes","trainers","wake"],"Wake BloodTex Trainers",price=1200)
+
+sportsKit = [TracksuitTop,TracksuitBottoms,WakeTop,WakeBottoms,WakeTrainers,WakeNitro,WakeNitroPlus,WakePolyTrainer,WakeBloodTex]
+
+DreggsPastry = Item(["food","dreggsfood"],"Dregg's Pastry",price=2)
+DreggsTea = Item(["food","dreggsfood"],"Dregg's Tea",price=1)
+DreggsRoll = Item(["food","dreggsfood"],"Dregg's Roll",price=3)
+DreggsPizza = Item(["food","dreggsfood"],"Dregg's Pizza Slice",price=2)
+DreggsMeal = Item(["food","dreggsfood"],"Dregg's Meal",price=7)
+DreggsGiantPastry = Item(["food","dreggsfood"],"Dregg's Giant Pastry",price=15)
+
+dreggs = [DreggsPastry,DreggsTea,DreggsRoll,DreggsPizza,DreggsMeal,DreggsGiantPastry]
+
 def GetPlayer():  #getIdx=True will return the player's index in the characters list
     for char in characters:
         if char.IsPlayer():
@@ -619,7 +640,7 @@ class Shop:
 shops = []
         
 #Make your shops here
-Chargen("shopowner", stats=[14,17,7,12,11,5,14,3],
+Chargen("shopowner", stats=[19,19,14,8,10,9,16,13], # He does have a business degree and played professional football
         forename="Alex", surname="Rodman",
         dob=datetime.date(1987, 2, 15), pob="Sutton Coldfield",
         height = 188, potheight = 188,
@@ -629,9 +650,42 @@ Rodmans = Shop(len(characters) -1, "Rodman's Fishing Equipment", ["rod", "fishin
 shops.append(Rodmans)
 #Grimsby Town Tickets" # Works well
 #Grimsby Town Merchandise" # Added items
+Chargen("shopowner", stats=[7,6,10,9,7,4,10,7],
+        forename="Paul", surname="Generic Cashier",
+        dob=datetime.date(1990,1,1), pob="Cleethorpes",
+        height = 174, potheight = 176,
+        inv = grimsbyKit * 7,
+        cash = 20)
+GTMerchandise = Shop(len(characters) -1, "Grimsby Town Merchandise", ["grimsbymerch"], buy=False)
+shops.append(GTMerchandise)
 #Bailey & Severn Travel" # Requires custom menu
 #History Bookstore" # Added items
+Chargen("shopowner", stats=[7,6,10,9,7,4,10,7],
+        forename="Paul", surname="Generic Cashier",
+        dob=datetime.date(1990,1,1), pob="Cleethorpes",
+        height = 174, potheight = 176,
+        inv = Books * 20,
+        cash = 20)
+HistoryBookstore = Shop(len(characters) -1, "History Bookstore", ["books"], buy=False)
+shops.append(HistoryBookstore)
 #Athletix Sportswear") # Not done yet
+Chargen("shopowner", stats=[7,6,10,9,7,4,10,7],
+        forename="Paul", surname="Generic Cashier",
+        dob=datetime.date(1990,1,1), pob="Cleethorpes",
+        height = 174, potheight = 176,
+        inv = grimsbyKit * 1 + sportsKit * 5,
+        cash = 20)
+Athletix = Shop(len(characters) -1, "Athletix Sportswear", ["grimsbymerch","genericsportskit","wake"], buy=False)
+shops.append(Athletix)
+# Dregg's Bakery (Greggs)
+Chargen("shopowner", stats=[7,6,10,9,7,4,10,7],
+        forename="Paul", surname="Generic Cashier",
+        dob=datetime.date(1990,1,1), pob="Cleethorpes",
+        height = 174, potheight = 176,
+        inv = dreggs * 40,
+        cash = 20)
+DreggsBakeryGrimsby = Shop(len(characters) -1, "Dregg's Bakery", ["dreggsfood"], buy=False)
+shops.append(DreggsBakeryGrimsby)
 
 def Shopping():
     print("Welcome to the shopping precinct")
