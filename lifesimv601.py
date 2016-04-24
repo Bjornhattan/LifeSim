@@ -276,7 +276,7 @@ class Character():
             notifications.append("New achievement: " + achievement.name)
             if len(achievement.rewards) != 0:
                 notifications.append("Reward added!")
-            achievement.Reward(self)
+            achievement.Reward()
     def DisplayAchievements(self):
         print("\n                             Achievements"
               "\n¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯"
@@ -384,17 +384,21 @@ def GetPlayerIndex():
         if char.IsPlayer():
             return i
 
-def GetType(typeFilter, getIdx = False, chars = characters):
+def GetType(typeFilter, getIdx = False, chars = None):
+    if chars == None:
+        chars = characters
     if getIdx:
         return [chars.index(char) for char in chars if char.charType == typeFilter]
     else:
         return [char for char in chars if char.charType == typeFilter]
     
-def GetAttr(attr, value = None, getIdx = False, chars = characters):
+def GetAttr(attr, value = None, getIdx = False, chars = None):
+    if chars == None:
+        chars = characters
     matches = []
-    for idx, char in enumerate(chars):
+    for char in chars:
         if hasattr(char, attr):
-            matches.append(idx if getIdx else char)
+            matches.append(characters.index(char) if getIdx else char)
             if value is not None and getattr(char, attr) != value:
                 del(matches[-1])
     return matches
@@ -592,7 +596,7 @@ def Fish():
     wardenName = warden.FullName()
     print("The fishermen invite you to go fishing."
           "\nThe day's warden, %s, welcomes you onto the boat."%wardenName)
-    if not GetPlayer().HasItemOfType("rod"):
+    if not GetPlayer().HasItemOfType(["rod"]):
         print(wardenName + " sees that you don't have a rod."
               "\nHe goes over to his collection and pulls out an amateur rod and gives it to you.")
         characters[GetPlayerIndex()].AddItem(AmateurRod)
@@ -810,7 +814,7 @@ def FbTicket():
     ticketShop = input ("Would you like to buy tickets? [y/n]").lower()
     if ticketShop == "y":
         if GetPlayer().cash >= 15:
-            ticket = Item("ticket", "GTFC vs. %s Tickets"%fixture[0], price=15, fixture=fixture)
+            ticket = Item(["ticket"], "GTFC vs. %s Tickets"%fixture[0], price=15, fixture=fixture)
             characters[GetPlayerIndex()].AddCash(-15)
             characters[GetPlayerIndex()].AddItem(ticket)
         else:
@@ -819,7 +823,7 @@ def FbTicket():
 def FbStadium():
     fixture = fbFixtures[-1]
     if fixture[1] == today and fixture not in fbHistory:
-        if GetPlayer().HasItemOfType("ticket"):
+        if GetPlayer().HasItemOfType(["ticket"]):
             playerTickets = GetPlayer().GetItemsOfType("ticket")
             for ticket in playerTickets:
                 if ticket.fixture == fixture:
