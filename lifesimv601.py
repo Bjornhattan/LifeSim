@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import datetime, random, calendar, time, bisect, collections, json, os, shelve
+import datetime, random, calendar, time, bisect, collections, json, os, shelve, glob
 
 phoneNoDB = []
 startDate = datetime.date(2010, 1, 1)
@@ -166,7 +166,7 @@ class Character():
               "\n%s¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯"%("¯¯¯¯" if selling else ""))
         if len(items) > 0:
             for idx, item in enumerate(items):
-                print("%s%s%s%d%s%s%s%s"%(str(idx + 1) + " " * (4 - len(str(idx))) if selling else "",
+                print("%s%s%s%d%s%s%s%s"%(str(idx + 1) + " " * (4 - len(str(idx+1))) if selling else "",
                                           item.name, " " * (34 - len(item.name)),
                                           items[item], " " * (11 - len(str(items[item]))),
                                           item.itemTypes[0].title(), " " * (17 - len(item.itemTypes[0])),
@@ -292,12 +292,12 @@ class Achievement():
         self.name = name
         self.desc = desc
         self.rewards = rewards
-    def Reward(self, char):
+    def Reward(self):
         for reward in self.rewards:
-            if type(reward).__name__ == "int":
-                char.AddCash(reward)
-            elif type(reward).__name__ == "Character":
-                char.AddItem(reward)
+            if type(reward) == int:
+                characters[GetPlayerIndex()].AddCash(reward)
+            elif type(reward) == Item:
+                characters[GetPlayerIndex()].AddItem(reward)
 
                 
 AchFishing1 = Achievement("Gone Fishing", "Go fishing in the Humber")
@@ -474,7 +474,7 @@ def PrimarySchool():
     startingIdx = len(characters)
     classMatesIndices = list(range(startingIdx, startingIdx + 30))
     randomClassMates = input("Would you like random classmates? [y/n]").lower() # Saying Yes doesn't seem to work perfectly. Also, part of me wants the ability to have some random classmates and some chosen, but this is very hard to do...
-    if randomClassMates == "y":
+    if randomClassMates == "n":
         for n in range(30):
             Chargen("classmate")
     else:
@@ -741,7 +741,8 @@ def Trade(vendorIdx, itemTypes=[], buy=True):
     buyer = characters[buyerIdx]
     while True:
         items = seller.DisplayInv(True, itemTypes)
-        print("%s's cash: £%d"%(vendor.forename, vendor.cash))
+        if not buy:
+            print("%s's cash: £%d"%(vendor.forename, vendor.cash))
         print("Your cash: £%d"%GetPlayer().cash)
         if items == None:
             print("%s no items to sell!"%("You have" if not buy else seller.forename + " has"))
@@ -871,9 +872,8 @@ def List(*args):
 def SaveGame(*args):
     d = shelve.open("save")
     d['chars'] = characters
+    d['date'] = today
     d.close()
-    d = shelve.open("save")
-    print(d['chars'][0].FullName())
     
 def Inv(*args):
     GetPlayer().DisplayInv()
@@ -885,6 +885,16 @@ commands = {"inv": Inv,
             "cash": Cash,
             "ach": ShowAchievements,
             "save": SaveGame}
+
+def NewGame():
+    if glob.glob("save.*"):
+        while True:
+            nl  = input("[1] New Game\n[2] Load Save\n")
+            if nl in ["1", "2"]:
+                break
+        if nl == "2":
+            return False
+    return True
             
 print("\n                      |    |  |¯¯  |¯¯"
       "\n                      |    |  |--  |--"
@@ -898,23 +908,31 @@ print("\n                      |    |  |¯¯  |¯¯"
       "\n                     __  |o|    ___"
       "\n                    |]]| |o|_  / _ \  _"
       "\n              ______|()|_| []|_|/_\|_|o|______"
-      "\n\n\nWelcome to LifeSim v6!"
-      "\nTo progress the day, strike 'Enter'."
-      "\nEnter commands to do things, type 'help commands' for a list."
-      "\nFor help on a certain topic, type 'help <topic>'."
-      "\nEnjoy!\n")
-
-Chargen("player")
-GetPlayer().PrintInfo()
-while input("Do you wish to keep this character? [y/n]").lower() != "y":
-    del(characters[-1])
+      "\n\n\nWelcome to LifeSim v6!")
+      
+if NewGame():
+    newGame = True
+    print("\nTo progress the day, strike 'Enter'."
+          "\nEnter commands to do things, type 'help commands' for a list."
+          "\nFor help on a certain topic, type 'help <topic>'."
+          "\nEnjoy!\n")
     Chargen("player")
     GetPlayer().PrintInfo()
-characters[GetPlayerIndex()].AddCash(10000)
-fbFixtures.append(FixtureGen())
+    while input("Do you wish to keep this character? [y/n]").lower() != "y":
+        del(characters[-1])
+        Chargen("player")
+        GetPlayer().PrintInfo()
+    characters[GetPlayerIndex()].AddCash(10000)
+    fbFixtures.append(FixtureGen())
+else:
+    newGame = False
+    d = shelve.open("save")
+    characters = d["chars"]
+    today = d['date']
+
 
 while True: #Main game loop
-    daysPast = 0
+    daysPast = (today - datetime.date(2010, 1, 1)).days
     while daysPast < 45000:
         for i in range(len(notifications)):
             print(notifications.pop(0))
