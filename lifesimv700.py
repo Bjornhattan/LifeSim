@@ -2,12 +2,12 @@
 import datetime, random, calendar, time, bisect, collections, json, os, shelve, glob
 
 phoneNoDB = []
-startDate = datetime.date(2010, 1, 1)
-today = datetime.date(2010, 1, 1)
+startDate = datetime.date(2013, 9, 1)
+today = datetime.date(2013, 9, 1)
 characters = []
-forenames = ["Dave","Liam","Kyle","James","Anthony","Daniel","Dan","Valentino","John","Chris","Chiles","Charlie","Connor","Darren","Matthew","James","Michael","Kevin","Tom","Thomas","Richard","Harry","Edmund","Alexander","Andreas","Andrew","Craig", "Kieren", "Rob", "Jon", "Mark", "Jacob", "Oliver", "William", "Mike", "Zac", "Isaac", "Joseph", "Joe", "Lucas", "Aaron", "Cameron", "Owen", "Seth", "Josh", "Ryan", "Jake", "Edward", "Richard", "George", "Freddie", "Sam", "Samuel", "Callum", "Rhys", "Ollie", "Hugo", "Max", "Oscar", "Aiden", "Theo", "Nathan", "Josh", "Bobby", "Luke", "Logan", "Henry", "Leo", "Riley", "Noah", "Archie", "Kai", "Harvey", "Toby", "Sebastian", "Freddie", "Louis", "Finlay", "Frederick", "Reuben", "Blake", "Theodore", "Felix", "Tristan", "Morgan", "Flynn", "Reggie", "Declan", "Jonathan", "Leighton", "Jason", "Alfred", "Maximilian", "Sean", "Rohan", "Myles", "Christian", "Robin", "Euan", "Francis", "Arlo", "Sidney", "Rahpael", "Eric", "Rufus", "Elias"]
+forenames = ["Dave","Liam","Kyle","James","Anthony","Patrick","Daniel","Dan","Jay","John","Chris","Chiles","Charlie","Connor","Darren","Matthew","James","Michael","Kevin","Tom","Thomas","Richard","Harry","Edmund","Alexander","Andreas","Andrew","Craig", "Kieren", "Rob", "Jon", "Mark", "Jacob", "Oliver", "William", "Mike", "Zac", "Isaac", "Joseph", "Joe", "Lucas", "Aaron", "Cameron", "Owen", "Seth", "Josh", "Ryan", "Jake", "Edward", "Richard", "George", "Freddie", "Sam", "Samuel", "Callum", "Rhys", "Ollie", "Hugo", "Max", "Oscar", "Aiden", "Theo", "Nathan", "Josh", "Bobby", "Luke", "Logan", "Henry", "Leo", "Riley", "Noah", "Archie", "Kai", "Harvey", "Toby", "Sebastian", "Freddie", "Louis", "Finlay", "Frederick", "Reuben", "Blake", "Theodore", "Felix", "Tristan", "Morgan", "Flynn", "Reggie", "Declan", "Jonathan", "Leighton", "Jason", "Alfred", "Maximilian", "Sean", "Rohan", "Myles", "Christian", "Robin", "Euan", "Francis", "Arlo", "Sidney", "Rahpael", "Eric", "Rufus", "Elias"]
 fForenames = ["Laura","Fiona","Mary","Amy","Rachel","Louise","Natalie","Samantha","Tina","Alice","Charity"]
-surnames = ["Rainton","Rodriguez","Carver","Curtis","Turnbull","Trumbull","Taylor","Sole","Salisbury","Derbyshire","Hall","Radcliffe","O'Donnell","Whitby","Waites","Wood","Mahon","Rodman","Mellows","Smith","Chapman","McDonald","Molinero","Miller","Morecambe","Shield","York", "Jacobson", "Daniels", "Watts", "Brown", "Johnson", "Lewis", "White", "Gray", "Black", "Green", "Davis", "Hart", "Hill", "Turner", "Jackson", "Scott", "Campbell", "Moore", "Adams", "Stone", "Steel", "Reynolds", "Collins", "Harris", "Clarke", "Edwards", "Lee", "Graham", "Carr", "Gardner", "Wilson", "Lawrence", "Martin", "Ellis", "Brooks", "Marshall", "Baker", "Parker", "Reid", "Atherton", "West", "Carpenter", "Fletcher", "Davison", "Cullen", "Abbott", "Adkins", "Anderson", "Armstrong", "Arher", "Ashby", "Griffin", "Greenwood", "Haley", "Hamilton", "Ashworth", "Atkinson", "Barry", "Bain", "Beck", "Banks", "Austin", "Hayden", "Harper", "Hays", "Henderson", "Baxter", "Boyd", "House", "Hood", "Higgens", "Joyce", "Jamison", "Jordan", "Clayton", "Kirk", "Knight", "Cole", "Daley", "Crouch", "Cox", "MacMillan", "Lowe", "Leslie", "Drake", "Donnelly", "Duncan", "Dunn", "McAllister", "McCoy", "Fischer", "Foster", "Fraser", "Faulkner", "McKay", "Glover", "Gilbert", "Moss", "Wheeler", "Whitaker", "Wright", "Terry", "Sullivan", "Stout", "Stokes", "Sharp", "Reed", "Burns", "Glaude", "Underwood", "Salt", "Tarrant", "Chester", "Hyde", "Sugar", "Park", "Oldman", "Field"]
+surnames = ["Foreman","Eastwood","Rainton","Rodriguez","Carver","Curtis","Trump","Trumbull","Taylor","Sole","Salisbury","Derbyshire","Hall","Radcliffe","O'Donnell","Whitby","Waites","Wood","Mahon","Rodman","Mellows","Smith","Chapman","McDonald","Molinero","Miller","Morecambe","Shield","York", "Jacobson", "Daniels", "Watts", "Brown", "Johnson", "Lewis", "White", "Gray", "Black", "Green", "Davis", "Hart", "Hill", "Turner", "Jackson", "Scott", "Campbell", "Moore", "Adams", "Stone", "Steel", "Reynolds", "Collins", "Harris", "Clarke", "Edwards", "Lee", "Graham", "Carr", "Gardner", "Wilson", "Lawrence", "Martin", "Ellis", "Brooks", "Marshall", "Baker", "Parker", "Reid", "Atherton", "West", "Carpenter", "Fletcher", "Davison", "Cullen", "Abbott", "Adkins", "Anderson", "Armstrong", "Arher", "Ashby", "Griffin", "Greenwood", "Haley", "Hamilton", "Ashworth", "Atkinson", "Barry", "Bain", "Beck", "Banks", "Austin", "Hayden", "Harper", "Hays", "Henderson", "Baxter", "Boyd", "House", "Hood", "Higgens", "Joyce", "Jamison", "Jordan", "Clayton", "Kirk", "Knight", "Cole", "Daley", "Crouch", "Cox", "MacMillan", "Lowe", "Leslie", "Drake", "Donnelly", "Duncan", "Dunn", "McAllister", "McCoy", "Fischer", "Foster", "Fraser", "Faulkner", "McKay", "Glover", "Gilbert", "Moss", "Wheeler", "Whitaker", "Wright", "Terry", "Sullivan", "Stout", "Stokes", "Sharp", "Reed", "Burns", "Glaude", "Underwood", "Salt", "Tarrant", "Chester", "Hyde", "Sugar", "Park", "Oldman", "Field"]
 towns = ["Grimsby", "Scunthorpe", "Hull", "Cleethorpes", "Louth"]
 townPops = [50, 15, 10, 5, 5]
 daysSinceFish = 65535
@@ -408,7 +408,7 @@ def Chargen(charType, **kwargs):
         forename = input ("What is your forename? ").title()
         surname = input ("What is your surname? ").title()
         placeob = input ("Where were you born? ").title()
-        dob = datetime.date(2000, 1, 1)
+        dob = datetime.date(2002, 4, 7)
         stage = ""
         statsType = ChooseStats()
     else:
@@ -422,24 +422,24 @@ def Chargen(charType, **kwargs):
             stage = "work"
             statsType = PSTeacherType
         elif charType=="classmate":
-            lowerDate = datetime.date(1999, 9, 1)
-            upperDate = datetime.date(2000, 8, 31)
+            lowerDate = datetime.date(2001, 9, 1)
+            upperDate = datetime.date(2002, 8, 31)
             stage = "primary"
             statsType = defaultStats
         elif charType=="customclassmate":
-            lowerDate = datetime.date(1999, 9, 1)
-            upperDate = datetime.date(2000, 8, 31)
+            lowerDate = datetime.date(2001, 9, 1)
+            upperDate = datetime.date(2002, 8, 31)
             stage = "primary"
             statsType = kwargs["stats"]
         elif charType=="friend":
             if GetPlayer().stage=="primary":
-                lowerDate = datetime.date(1997, 1, 1)
-                upperDate = datetime.date(2002, 12, 31)
+                lowerDate = datetime.date(1999, 1, 1)
+                upperDate = datetime.date(2004, 12, 31)
                 stage = "work"
                 statsType = defaultStats
             elif GetPlayer().stage=="":
-                lowerDate = datetime.date(1996, 1, 1)
-                upperDate = datetime.date(2000, 12, 31)
+                lowerDate = datetime.date(1999, 1, 1)
+                upperDate = datetime.date(2004, 12, 31)
                 stage = "work"
                 statsType = defaultStats
         elif charType=="fisherman":
