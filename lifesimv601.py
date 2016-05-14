@@ -157,7 +157,7 @@ class Character():
         items = collections.OrderedDict({})
         self.inv.sort(key = lambda item: item.name)
         for item in self.inv:
-            if set(itemTypes) <= set(item.itemTypes):
+            if not set(itemTypes).isdisjoint(set(item.itemTypes)) or not itemTypes:
                 if item not in items:
                     items[item] = 1
                 else:
@@ -183,10 +183,10 @@ class Character():
         return item in self.inv
     def HasItemOfType(self, itemTypes):
         for item in self.inv:
-            if set(itemTypes) <= set(item.itemTypes):
+            if not set(itemTypes).isdisjoint(set(item.itemTypes)):
                 return True
     def GetItemsOfType(self, itemTypes):
-        return [item for item in self.inv if set(itemTypes) <= set(item.itemTypes)]
+        return [item for item in self.inv if not set(itemTypes).isdisjoint(set(item.itemTypes))]
     def GetBestItemOfType(self, itemTypes):
         items = self.GetItemsOfType(itemTypes)
         items.sort(key = lambda item: item.rating)
@@ -631,9 +631,8 @@ def Fish():
         Trade(wardenIdx, ["fish"], False)
 
 class Shop:
-    def __init__(self, ownerIndex, name="", desc="", itemTypes=[], buy=False, sell=True):
+    def __init__(self, ownerIndex, name="", itemTypes=[], buy=False, sell=True):
         self.name = name
-        self.desc = desc
         self.ownerIndex = ownerIndex
         self.itemTypes = itemTypes
         self.buy = buy
@@ -933,6 +932,7 @@ else:
     d = shelve.open("save")
     characters = d["chars"]
     today = d['date']
+    d.close()
 
 
 while True: #Main game loop
