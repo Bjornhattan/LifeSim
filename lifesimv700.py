@@ -117,6 +117,9 @@ def Ord(n): #Returns the ordinal version of n
 
 def DisplayDate(date): #Returns a human-readable date
     return "%s %s %s"%(calendar.day_name[date.weekday()], Ord(date.day), date.strftime("%B %Y"))
+	
+def DisplayDateNoYear(date): #Returns a human-readable date without the year
+    return "%s %s %s"%(calendar.day_name[date.weekday()], Ord(date.day), date.strftime("%B"))
 
 def WeightedChoice(weights): #Returns a weighted choice from a {choice: weight} dictionary
     totals = []
@@ -220,6 +223,93 @@ class Character():
                                 self.charisma,
                                 self.eloquence,
                                 "Player relationship: %d"%self.CalcPlayerRelation() if self.charType != "player" else ""))
+								
+    def PrintDesc(self):
+        description = ""
+        description += self.FullName()
+        description += " is a "
+        if self.CalcAge() == 0:
+            description += "baby"
+        elif self.CalcAge() < 3:
+            description += "toddler"
+        elif self.CalcAge() < 9:
+            description += "young boy"
+        elif self.CalcAge() < 13:
+            description += "boy"
+        elif self.CalcAge() < 20:
+            description += "teenage lad"
+        elif self.CalcAge() < 30:
+            description += "young man"
+        elif self.CalcAge() < 60:
+            description += "man"
+        else:
+            description += "old man"
+        description += " from "
+        description += self.placeOfBirth
+        description += ". His birthday is "
+        description += self.Birthday()
+        description += ". He is "
+        if self.strength > 18:
+            description += "an enormously strong individual"
+        elif self.strength > 15:
+            description += "stronger than most"
+        elif self.strength > 12:
+            description += "pretty tough"
+        elif self.strength > 8:
+            description += "of average strength"
+        elif self.strength > 5:
+            description += "quite weak"
+        elif self.strength > 2:
+            description += "easy to take in a fight"
+        else:
+            description += "weaker than a twig"
+        description += ", and "
+        if self.athleticism > 18:
+            description += "possesses Olympian stamina"
+        elif self.athleticism > 15:
+            description += "able to outlast most"
+        elif self.athleticism > 12:
+            description += "reasonably fit"
+        elif self.athleticism > 8:
+            description += "not particularly athletic"
+        elif self.athleticism > 5:
+            description += "unfit"
+        elif self.athleticism > 2:
+            description += "a poor athlete"
+        else:
+            description += "struggles to see out any sport"
+        print(description)
+        description += ". He is also "
+        if self.intelligence > 18:
+            description += "incredibly intelligent"
+        elif self.intelligence > 15:
+            description += "a fast thinker"
+        elif self.intelligence > 12:
+            description += "quite bright"
+        elif self.intelligence > 8:
+            description += "of average intelligence"
+        elif self.intelligence > 5:
+            description += "not the quickest"
+        elif self.intelligence > 2:
+            description += "not very intelligent"
+        else:
+            description += "someone who struggles with complex thought"
+        description += ", and "
+        if self.computers > 18:
+            description += "excellent at computing"
+        elif self.computers > 15:
+            description += "on the ball when it comes to technology"
+        elif self.computers > 12:
+            description += "skilled on computers"
+        elif self.computers > 8:
+            description += "a decent computer user"
+        elif self.computers > 5:
+            description += "unskilled at using the mouse"
+        elif self.computers > 2:
+            description += "incompetent with technology"
+        else:
+            description += "unable to even plug in a USB"
+        print(description) #### TO DO: COMPLETE DESCRIPTION
     def __getattr__(self, name):
         if name in self.__getattribute__("attributes"):
             return self.attributes[name]
@@ -247,6 +337,8 @@ class Character():
                 break
     def DOBString(self):
         return DisplayDate(self.dateOfBirth)
+    def Birthday(self):
+        return DisplayDateNoYear(self.dateOfBirth)
     def FullName(self):
         return "%s %s"%(self.forename, self.surname)
     def CalcPlayerRelation(self, minrel=0, maxrel=180):
@@ -871,6 +963,10 @@ def Cash(*args):
 def List(*args):
     for char in characters:
         char.PrintInfo()
+		
+def ListDesc(*args):
+    for char in characters:
+        char.PrintDesc()
         
 def SaveGame(*args):
     d = shelve.open("save")
@@ -883,6 +979,7 @@ def Inv(*args):
     
 commands = {"inv": Inv,
             "list": List,
+            "describe":ListDesc,
             "help": Help,
             "visit": Visit,
             "cash": Cash,
